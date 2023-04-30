@@ -60,6 +60,10 @@ let lang = Language.get();
 
 let rightShiftButton = null;
 let leftShiftButton = null;
+let capsLockButton = null;
+
+let isShiftPressed = false;
+let isCapsLockPressed = false;
 
 class Keyboard {
   static createComponent(tagName) {
@@ -190,6 +194,7 @@ class Keyboard {
       } else if (index === 3) {
         specialKey.dataset.code = SpecialButtonCodes.CAPS_LOCK;
         specialButton.textContent = keyLabels.special['caps-lock'];
+        capsLockButton = specialButton;
       } else if (index === 4) {
         specialKey.dataset.code = SpecialButtonCodes.ENTER;
         specialButton.textContent = keyLabels.special.enter;
@@ -243,6 +248,37 @@ class Keyboard {
     const textareaValue = keyboardTextarea.value;
     const cursorPosition = keyboardTextarea.selectionStart;
 
+    const shiftKeyPressed = e.code === SpecialButtonCodes.RIGHT_SHIFT || e.code === SpecialButtonCodes.LEFT_SHIFT;
+    const capsLockKeyPressed = e.code === SpecialButtonCodes.CAPS_LOCK;
+
+    if (capsLockKeyPressed && isShiftPressed && !isCapsLockPressed) {
+      isCapsLockPressed = true;
+      symbolLabelsToLowerCase();
+    } else if (capsLockKeyPressed && isShiftPressed && isCapsLockPressed) {
+      button.classList.remove(ClassNames.BUTTON_ACTIVE);
+      isCapsLockPressed = false;
+      symbolLabelsToUpperCase();
+    } else if (capsLockKeyPressed && isCapsLockPressed) {
+      button.classList.remove(ClassNames.BUTTON_ACTIVE);
+      isCapsLockPressed = false;
+      symbolLabelsToLowerCase();
+      return;
+    } else if (capsLockKeyPressed) {
+      symbolLabelsToUpperCase();
+      isCapsLockPressed = true;
+    }
+
+    if (shiftKeyPressed && !isCapsLockPressed) {
+      showAltNumberButtons();
+      showAltSymbolButtons();
+      isShiftPressed = true;
+    } else if (shiftKeyPressed && isCapsLockPressed) {
+      showBaseSymbolButtons();
+      showAltNumberButtons();
+      showAltNotLetterButtons();
+      isShiftPressed = true;
+    }
+
     if (!specialKeys.includes(key) || key.dataset.code.includes('Arrow')) {
       updateTextareaValue(button.textContent);
     } else if (e.code === SpecialButtonCodes.ENTER) {
@@ -258,10 +294,6 @@ class Keyboard {
       keyboardTextarea.selectionStart = cursorPosition;
       keyboardTextarea.selectionEnd = cursorPosition;
     }
-
-    if (e.code === SpecialButtonCodes.RIGHT_SHIFT || e.code === SpecialButtonCodes.LEFT_SHIFT) {
-      showAltButtons();
-    }
   }
 
   static keyUp(e) {
@@ -275,11 +307,24 @@ class Keyboard {
       }
     });
 
+    if (currentButton.parentElement.dataset.code === SpecialButtonCodes.CAPS_LOCK) {
+      return;
+    }
+
     currentButton.classList.remove(ClassNames.BUTTON_ACTIVE);
     activeButtons.delete(currentButton);
 
-    if (!activeButtons.has(rightShiftButton) && !activeButtons.has(leftShiftButton)) {
-      showBaseButtons();
+    const shiftKeyUnpressed = !activeButtons.has(rightShiftButton) && !activeButtons.has(leftShiftButton);
+
+    if (shiftKeyUnpressed && !isCapsLockPressed) {
+      showBaseNumberButtons();
+      showBaseSymbolButtons();
+      isShiftPressed = false;
+    } else if (shiftKeyUnpressed && isCapsLockPressed) {
+      symbolLabelsToUpperCase();
+      showBaseNumberButtons();
+      showBaseNotLetterButtons();
+      isShiftPressed = false;
     }
   }
 }
@@ -359,7 +404,47 @@ function updateTextareaValue(value) {
   keyboardTextarea.selectionStart = cursorPosition + value.length;
   keyboardTextarea.selectionEnd = cursorPosition + value.length;
 }
-function showAltButtons() {
+function symbolLabelsToUpperCase() {
+  symbolKeys.forEach((symbolKey) => {
+    if (symbolKey.dataset.code.includes('Key')) {
+      const visibleButton = symbolKey.querySelector(`.${ClassNames.BUTTON_VISIBLE}`);
+      visibleButton.classList.remove(ClassNames.BUTTON_VISIBLE);
+
+      const symbolButton = symbolKey.querySelector(`.${ClassNames.ALT}.${ClassNames[lang.toUpperCase()]}`);
+      symbolButton.classList.add(ClassNames.BUTTON_VISIBLE);
+    }
+  });
+}
+function symbolLabelsToLowerCase() {
+  symbolKeys.forEach((symbolKey) => {
+    if (symbolKey.dataset.code.includes('Key')) {
+      const visibleButton = symbolKey.querySelector(`.${ClassNames.BUTTON_VISIBLE}`);
+      visibleButton.classList.remove(ClassNames.BUTTON_VISIBLE);
+
+      const symbolButton = symbolKey.querySelector(`.${ClassNames.BASE}.${ClassNames[lang.toUpperCase()]}`);
+      symbolButton.classList.add(ClassNames.BUTTON_VISIBLE);
+    }
+  });
+}
+function showBaseNumberButtons() {
+  numberKeys.forEach((numberKey) => {
+    const visibleButton = numberKey.querySelector(`.${ClassNames.BUTTON_VISIBLE}`);
+    visibleButton.classList.remove(ClassNames.BUTTON_VISIBLE);
+
+    const baseButton = numberKey.querySelector(`.${ClassNames.BASE}.${ClassNames[lang.toUpperCase()]}`) || numberKey.querySelector(`.${ClassNames.BASE}`);
+    baseButton.classList.add(ClassNames.BUTTON_VISIBLE);
+  });
+}
+function showBaseSymbolButtons() {
+  symbolKeys.forEach((symbolKey) => {
+    const visibleButton = symbolKey.querySelector(`.${ClassNames.BUTTON_VISIBLE}`);
+    visibleButton.classList.remove(ClassNames.BUTTON_VISIBLE);
+
+    const baseButton = symbolKey.querySelector(`.${ClassNames.BASE}.${ClassNames[lang.toUpperCase()]}`) || symbolKey.querySelector(`.${ClassNames.BASE}`);
+    baseButton.classList.add(ClassNames.BUTTON_VISIBLE);
+  });
+}
+function showAltNumberButtons() {
   numberKeys.forEach((numberKey) => {
     const visibleButton = numberKey.querySelector(`.${ClassNames.BUTTON_VISIBLE}`);
     visibleButton.classList.remove(ClassNames.BUTTON_VISIBLE);
@@ -367,7 +452,8 @@ function showAltButtons() {
     const altButton = numberKey.querySelector(`.${ClassNames.ALT}.${ClassNames[lang.toUpperCase()]}`) || numberKey.querySelector(`.${ClassNames.ALT}`);
     altButton.classList.add(ClassNames.BUTTON_VISIBLE);
   });
-
+}
+function showAltSymbolButtons() {
   symbolKeys.forEach((symbolKey) => {
     const altButton = symbolKey.querySelector(`.${ClassNames.ALT}.${ClassNames[lang.toUpperCase()]}`) || symbolKey.querySelector(`.${ClassNames.ALT}`);
 
@@ -381,16 +467,30 @@ function showAltButtons() {
     visibleButton.classList.remove(ClassNames.BUTTON_VISIBLE);
   });
 }
-function showBaseButtons() {
-  numberKeys.forEach((numberKey) => {
-    const visibleButton = numberKey.querySelector(`.${ClassNames.BUTTON_VISIBLE}`);
-    visibleButton.classList.remove(ClassNames.BUTTON_VISIBLE);
-
-    const baseButton = numberKey.querySelector(`.${ClassNames.BASE}.${ClassNames[lang.toUpperCase()]}`) || numberKey.querySelector(`.${ClassNames.BASE}`);
-    baseButton.classList.add(ClassNames.BUTTON_VISIBLE);
-  });
-
+function showAltNotLetterButtons() {
   symbolKeys.forEach((symbolKey) => {
+    if (symbolKey.dataset.code.includes('Key')) {
+      return;
+    }
+
+    const altButton = symbolKey.querySelector(`.${ClassNames.ALT}.${ClassNames[lang.toUpperCase()]}`) || symbolKey.querySelector(`.${ClassNames.ALT}`);
+
+    if (!altButton || altButton.classList.contains(ClassNames.BUTTON_VISIBLE)) {
+      return;
+    }
+
+    altButton.classList.add(ClassNames.BUTTON_VISIBLE);
+
+    const visibleButton = symbolKey.querySelector(`.${ClassNames.BUTTON_VISIBLE}`);
+    visibleButton.classList.remove(ClassNames.BUTTON_VISIBLE);
+  });
+}
+function showBaseNotLetterButtons() {
+  symbolKeys.forEach((symbolKey) => {
+    if (symbolKey.dataset.code.includes('Key')) {
+      return;
+    }
+
     const visibleButton = symbolKey.querySelector(`.${ClassNames.BUTTON_VISIBLE}`);
     visibleButton.classList.remove(ClassNames.BUTTON_VISIBLE);
 
