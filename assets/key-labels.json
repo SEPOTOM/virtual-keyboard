@@ -65,15 +65,18 @@
       "alt": {
         "en": "~",
         "ru": "Ё"
-      }
+      },
+      "code": "Backquote"
     },
     {
       "base": "-",
-      "alt": "_"
+      "alt": "_",
+      "code": "Minus"
     },
     {
       "base": "=",
-      "alt": "+"
+      "alt": "+",
+      "code": "Equal"
     },
     {
       "base": {
@@ -183,7 +186,8 @@
       "alt": {
         "en": "{",
         "ru": "Х"
-      }
+      },
+      "code": "BracketLeft"
     },
     {
       "base": {
@@ -193,14 +197,16 @@
       "alt": {
         "en": "}",
         "ru": "Ъ"
-      }
+      },
+      "code": "BracketRight"
     },
     {
       "base": "\\",
       "alt": {
         "en": "|",
         "ru": "/"
-      }
+      },
+      "code": "Backslash"
     },
     {
       "base": {
@@ -300,7 +306,8 @@
       "alt": {
         "en": ":",
         "ru": "Ж"
-      }
+      },
+      "code": "Semicolon"
     },
     {
       "base": {
@@ -310,7 +317,8 @@
       "alt": {
         "en": "\"",
         "ru": "Э"
-      }
+      },
+      "code": "Quote"
     },
     {
       "base": {
@@ -390,7 +398,8 @@
       "alt": {
         "en": "<",
         "ru": "Б"
-      }
+      },
+      "code": "Comma"
     },
     {
       "base": {
@@ -400,7 +409,8 @@
       "alt": {
         "en": ">",
         "ru": "Ю"
-      }
+      },
+      "code": "Period"
     },
     {
       "base": {
@@ -410,10 +420,12 @@
       "alt": {
         "en": "?",
         "ru": ","
-      }
+      },
+      "code": "Slash"
     },
     {
-      "base": " "
+      "base": " ",
+      "code": "Space"
     }
   ],
   "special": {
