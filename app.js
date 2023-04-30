@@ -9,13 +9,19 @@ const ClassNames = {
 async function initApp() {
   document.body.className = ClassNames.PAGE;
 
-  await KeyLabels.fetch();
+  const keyLabels = await KeyLabels.fetch();
 
   const wrapper = Wrapper.createComponent('main');
   document.body.prepend(wrapper);
 
   const keyboard = Keyboard.createComponent('div');
   wrapper.append(keyboard);
+
+  Keyboard.setContent(keyLabels);
 }
 
 initApp();
+
+window.addEventListener('keydown', function(e) {
+  console.log(e);
+})
