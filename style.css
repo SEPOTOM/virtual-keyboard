@@ -2,15 +2,14 @@ html {
   height: 100%;
 }
 
-.wrapper {
-  margin: 0 auto;
-  max-width: 800px;
-}
-
-/* Page */
 .page {
   height: 100%;
   margin: 0;
+}
+
+.wrapper {
+  margin: 0 auto;
+  max-width: 800px;
 }
 
 /*# sourceMappingURL=style.css.map */
