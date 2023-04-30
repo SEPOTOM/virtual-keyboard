@@ -418,7 +418,7 @@
   ],
   "special": {
     "backspace": "Backspace",
-    "Tab": "Tab",
+    "tab": "Tab",
     "del": "Del",
     "caps-lock": "CapsLock",
     "enter": "Enter",
