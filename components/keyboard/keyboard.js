@@ -12,7 +12,7 @@ const ClassNames = {
   BUTTON_ACTIVE: 'keyboard__button_active',
   BUTTON_DARK: 'keyboard__button_dark',
 };
-const SpecialButtonTypes = {
+const SpecialButtonCodes = {
   BACKSPACE: 'Backspace',
   TAB: 'Tab',
   DEL: 'Delete',
@@ -44,8 +44,11 @@ const BUTTON_TYPE = 'button';
 const numberButtons = [];
 const symbolButtons = [];
 const specialButtons = [];
+const activeButtons = new Set();
 
 let keyLabels = null;
+let keyboardTextarea = null;
+let keyboard = null;
 let lang = Language.get();
 
 class Keyboard {
@@ -54,9 +57,9 @@ class Keyboard {
       throw new TypeError('tagName is not valid');
     }
 
-    const keyboard = createElement(tagName, ClassNames.KEYBOARD);
+    keyboard = createElement(tagName, ClassNames.KEYBOARD);
 
-    const keyboardTextarea = createElement('textarea', ClassNames.TEXTAREA);
+    keyboardTextarea = createElement('textarea', ClassNames.TEXTAREA);
     keyboardTextarea.rows = TEXTAREA_ROWS;
     keyboard.append(keyboardTextarea);
 
@@ -84,6 +87,7 @@ class Keyboard {
 
     numberButtons.forEach((numberButton, index) => {
       numberButton.textContent = keyLabels.numbers[index].base;
+      updateButton(numberButton, keyLabels.numbers[index].base, `Digit${keyLabels.numbers[index].base}`);
     });
 
     symbolButtons.forEach((symbolButton, index) => {
@@ -94,43 +98,89 @@ class Keyboard {
       } else {
         symbolButton.textContent = labelContainer.base[lang];
       }
+
+      if (labelContainer.code) {
+        symbolButton.dataset.type = labelContainer.code;
+      } else {
+        symbolButton.dataset.type = `Key${labelContainer.alt.en}`;
+      }
     });
 
     specialButtons.forEach((specialButton, index) => {
       if (index === 0) {
-        updateSpecialButton(specialButton, keyLabels.special.backspace, SpecialButtonTypes.BACKSPACE);
+        updateButton(specialButton, keyLabels.special.backspace, SpecialButtonCodes.BACKSPACE);
       } else if (index === 1) {
-        updateSpecialButton(specialButton, keyLabels.special.tab, SpecialButtonTypes.TAB);
+        updateButton(specialButton, keyLabels.special.tab, SpecialButtonCodes.TAB);
       } else if (index === 2) {
-        updateSpecialButton(specialButton, keyLabels.special.del, SpecialButtonTypes.DEL);
+        updateButton(specialButton, keyLabels.special.del, SpecialButtonCodes.DEL);
       } else if (index === 3) {
-        updateSpecialButton(specialButton, keyLabels.special['caps-lock'], SpecialButtonTypes.CAPS_LOCK);
+        updateButton(specialButton, keyLabels.special['caps-lock'], SpecialButtonCodes.CAPS_LOCK);
       } else if (index === 4) {
-        updateSpecialButton(specialButton, keyLabels.special.enter, SpecialButtonTypes.ENTER);
+        updateButton(specialButton, keyLabels.special.enter, SpecialButtonCodes.ENTER);
       } else if (index === 5) {
-        updateSpecialButton(specialButton, keyLabels.special.shift, SpecialButtonTypes.LEFT_SHIFT);
+        updateButton(specialButton, keyLabels.special.shift, SpecialButtonCodes.LEFT_SHIFT);
       } else if (index === 6) {
-        updateSpecialButton(specialButton, keyLabels.special['arrow-up'], SpecialButtonTypes.ARROW_UP);
+        updateButton(specialButton, keyLabels.special['arrow-up'], SpecialButtonCodes.ARROW_UP);
       } else if (index === 7) {
-        updateSpecialButton(specialButton, keyLabels.special.shift, SpecialButtonTypes.RIGHT_SHIFT);
+        updateButton(specialButton, keyLabels.special.shift, SpecialButtonCodes.RIGHT_SHIFT);
       } else if (index === 8) {
-        updateSpecialButton(specialButton, keyLabels.special.ctrl, SpecialButtonTypes.LEFT_CTRL);
+        updateButton(specialButton, keyLabels.special.ctrl, SpecialButtonCodes.LEFT_CTRL);
       } else if (index === 9) {
-        updateSpecialButton(specialButton, keyLabels.special.win, SpecialButtonTypes.WIN);
+        updateButton(specialButton, keyLabels.special.win, SpecialButtonCodes.WIN);
       } else if (index === 10) {
-        updateSpecialButton(specialButton, keyLabels.special.alt, SpecialButtonTypes.LEFT_ALT);
+        updateButton(specialButton, keyLabels.special.alt, SpecialButtonCodes.LEFT_ALT);
       } else if (index === 11) {
-        updateSpecialButton(specialButton, keyLabels.special.alt, SpecialButtonTypes.RIGHT_ALT);
+        updateButton(specialButton, keyLabels.special.alt, SpecialButtonCodes.RIGHT_ALT);
       } else if (index === 12) {
-        updateSpecialButton(specialButton, keyLabels.special['arrow-left'], SpecialButtonTypes.ARROW_LEFT);
+        updateButton(specialButton, keyLabels.special['arrow-left'], SpecialButtonCodes.ARROW_LEFT);
       } else if (index === 13) {
-        updateSpecialButton(specialButton, keyLabels.special['arrow-down'], SpecialButtonTypes.ARROW_DOWN);
+        updateButton(specialButton, keyLabels.special['arrow-down'], SpecialButtonCodes.ARROW_DOWN);
       } else if (index === 14) {
-        updateSpecialButton(specialButton, keyLabels.special['arrow-right'], SpecialButtonTypes.ARROW_RIGHT);
+        updateButton(specialButton, keyLabels.special['arrow-right'], SpecialButtonCodes.ARROW_RIGHT);
       } else if (index === 15) {
-        updateSpecialButton(specialButton, keyLabels.special.ctrl, SpecialButtonTypes.RIGHT_CTRL);
+        updateButton(specialButton, keyLabels.special.ctrl, SpecialButtonCodes.RIGHT_CTRL);
       }
     });
+  }
+
+  static keyDown(e) {
+    e.preventDefault();
+
+    const button = keyboard.querySelector(`[data-type="${e.code}"]`);
+    button.classList.add(ClassNames.BUTTON_ACTIVE);
+    activeButtons.add(button);
+
+    const textareaValue = keyboardTextarea.value;
+    const cursorPosition = keyboardTextarea.selectionStart;
+
+    if (!specialButtons.includes(button) || button.dataset.type.includes('Arrow')) {
+      updateTextareaValue(button.textContent);
+    } else if (e.code === SpecialButtonCodes.ENTER) {
+      updateTextareaValue('\n');
+    } else if (e.code === SpecialButtonCodes.TAB) {
+      updateTextareaValue('    ');
+    } else if (e.code === SpecialButtonCodes.BACKSPACE && cursorPosition > 0) {
+      keyboardTextarea.value = textareaValue.slice(0, cursorPosition - 1) + textareaValue.slice(cursorPosition);
+      keyboardTextarea.selectionStart = cursorPosition - 1;
+      keyboardTextarea.selectionEnd = cursorPosition - 1;
+    } else if (e.code === SpecialButtonCodes.DEL) {
+      keyboardTextarea.value = textareaValue.slice(0, cursorPosition) + textareaValue.slice(cursorPosition + 1);
+      keyboardTextarea.selectionStart = cursorPosition;
+      keyboardTextarea.selectionEnd = cursorPosition;
+    }
+  }
+
+  static keyUp(e) {
+    let currentButton = null;
+
+    activeButtons.forEach((activeButton) => {
+      if (activeButton.dataset.type === e.code) {
+        currentButton = activeButton;
+      }
+    });
+
+    currentButton.classList.remove(ClassNames.BUTTON_ACTIVE);
+    activeButtons.delete(currentButton);
   }
 }
 
@@ -200,9 +250,21 @@ function registerButton(button, rowIndex, keyIndex) {
     symbolButtons.push(button);
   }
 }
-function updateSpecialButton(button, content, type) {
+function updateButton(button, content, type) {
   button.textContent = content;
-  button.dataset.type = type;
+
+  if (type) {
+    button.dataset.type = type;
+  }
+}
+function updateTextareaValue(value) {
+  const textareaValue = keyboardTextarea.value;
+  const cursorPosition = keyboardTextarea.selectionStart;
+
+  keyboardTextarea.value = textareaValue.slice(0, cursorPosition) + value + textareaValue.slice(cursorPosition);
+
+  keyboardTextarea.selectionStart = cursorPosition + value.length;
+  keyboardTextarea.selectionEnd = cursorPosition + value.length;
 }
 
 export default Keyboard;

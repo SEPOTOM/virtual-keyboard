@@ -22,6 +22,5 @@ async function initApp() {
 
 initApp();
 
-window.addEventListener('keydown', function(e) {
-  console.log(e);
-})
+window.addEventListener('keydown', Keyboard.keyDown);
+window.addEventListener('keyup', Keyboard.keyUp);
