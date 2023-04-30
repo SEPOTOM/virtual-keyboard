@@ -58,6 +58,9 @@ let keyboardTextarea = null;
 let keyboard = null;
 let lang = Language.get();
 
+let rightShiftButton = null;
+let leftShiftButton = null;
+
 class Keyboard {
   static createComponent(tagName) {
     if (!tagName && typeof tagName !== 'string') {
@@ -193,12 +196,14 @@ class Keyboard {
       } else if (index === 5) {
         specialKey.dataset.code = SpecialButtonCodes.LEFT_SHIFT;
         specialButton.textContent = keyLabels.special.shift;
+        leftShiftButton = specialButton;
       } else if (index === 6) {
         specialKey.dataset.code = SpecialButtonCodes.ARROW_UP;
         specialButton.textContent = keyLabels.special['arrow-up'];
       } else if (index === 7) {
         specialKey.dataset.code = SpecialButtonCodes.RIGHT_SHIFT;
         specialButton.textContent = keyLabels.special.shift;
+        rightShiftButton = specialButton;
       } else if (index === 8) {
         specialKey.dataset.code = SpecialButtonCodes.LEFT_CTRL;
         specialButton.textContent = keyLabels.special.ctrl;
@@ -253,6 +258,10 @@ class Keyboard {
       keyboardTextarea.selectionStart = cursorPosition;
       keyboardTextarea.selectionEnd = cursorPosition;
     }
+
+    if (e.code === SpecialButtonCodes.RIGHT_SHIFT || e.code === SpecialButtonCodes.LEFT_SHIFT) {
+      showAltButtons();
+    }
   }
 
   static keyUp(e) {
@@ -268,6 +277,10 @@ class Keyboard {
 
     currentButton.classList.remove(ClassNames.BUTTON_ACTIVE);
     activeButtons.delete(currentButton);
+
+    if (!activeButtons.has(rightShiftButton) && !activeButtons.has(leftShiftButton)) {
+      showBaseButtons();
+    }
   }
 }
 
@@ -345,6 +358,45 @@ function updateTextareaValue(value) {
 
   keyboardTextarea.selectionStart = cursorPosition + value.length;
   keyboardTextarea.selectionEnd = cursorPosition + value.length;
+}
+function showAltButtons() {
+  numberKeys.forEach((numberKey) => {
+    const visibleButton = numberKey.querySelector(`.${ClassNames.BUTTON_VISIBLE}`);
+    visibleButton.classList.remove(ClassNames.BUTTON_VISIBLE);
+
+    const altButton = numberKey.querySelector(`.${ClassNames.ALT}.${ClassNames[lang.toUpperCase()]}`) || numberKey.querySelector(`.${ClassNames.ALT}`);
+    altButton.classList.add(ClassNames.BUTTON_VISIBLE);
+  });
+
+  symbolKeys.forEach((symbolKey) => {
+    const altButton = symbolKey.querySelector(`.${ClassNames.ALT}.${ClassNames[lang.toUpperCase()]}`) || symbolKey.querySelector(`.${ClassNames.ALT}`);
+
+    if (!altButton || altButton.classList.contains(ClassNames.BUTTON_VISIBLE)) {
+      return;
+    }
+
+    altButton.classList.add(ClassNames.BUTTON_VISIBLE);
+
+    const visibleButton = symbolKey.querySelector(`.${ClassNames.BUTTON_VISIBLE}`);
+    visibleButton.classList.remove(ClassNames.BUTTON_VISIBLE);
+  });
+}
+function showBaseButtons() {
+  numberKeys.forEach((numberKey) => {
+    const visibleButton = numberKey.querySelector(`.${ClassNames.BUTTON_VISIBLE}`);
+    visibleButton.classList.remove(ClassNames.BUTTON_VISIBLE);
+
+    const baseButton = numberKey.querySelector(`.${ClassNames.BASE}.${ClassNames[lang.toUpperCase()]}`) || numberKey.querySelector(`.${ClassNames.BASE}`);
+    baseButton.classList.add(ClassNames.BUTTON_VISIBLE);
+  });
+
+  symbolKeys.forEach((symbolKey) => {
+    const visibleButton = symbolKey.querySelector(`.${ClassNames.BUTTON_VISIBLE}`);
+    visibleButton.classList.remove(ClassNames.BUTTON_VISIBLE);
+
+    const baseButton = symbolKey.querySelector(`.${ClassNames.BASE}.${ClassNames[lang.toUpperCase()]}`) || symbolKey.querySelector(`.${ClassNames.BASE}`);
+    baseButton.classList.add(ClassNames.BUTTON_VISIBLE);
+  });
 }
 
 export default Keyboard;
