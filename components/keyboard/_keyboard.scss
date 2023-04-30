@@ -45,7 +45,7 @@
   }
 
   &__button {
-    display: flex;
+    display: none;
     justify-content: center;
     align-items: center;
     width: 100%;
@@ -72,6 +72,10 @@
     &_active {
       background-color: $key-active-color;
       border-radius: 50%;
+    }
+
+    &_visible {
+      display: flex;
     }
   }
 }

@@ -50,7 +50,7 @@ html {
   min-width: 90px;
 }
 .keyboard__button {
-  display: flex;
+  display: none;
   justify-content: center;
   align-items: center;
   width: 100%;
@@ -72,6 +72,9 @@ html {
 .keyboard__button_active {
   background-color: #ce0707;
   border-radius: 50%;
+}
+.keyboard__button_visible {
+  display: flex;
 }
 
 /*# sourceMappingURL=style.css.map */

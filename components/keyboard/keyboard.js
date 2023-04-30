@@ -11,6 +11,13 @@ const ClassNames = {
   BUTTON: 'keyboard__button',
   BUTTON_ACTIVE: 'keyboard__button_active',
   BUTTON_DARK: 'keyboard__button_dark',
+  BUTTON_VISIBLE: 'keyboard__button_visible',
+  BASE: 'base',
+  ALT: 'alt',
+  RU: 'ru',
+  EN: 'en',
+  SHIFT: 'shift',
+  CAPS_LOCK: 'caps-lock'
 };
 const SpecialButtonCodes = {
   BACKSPACE: 'Backspace',
@@ -41,9 +48,9 @@ const KEYS_IN_FIFTH_ROW_QUANTITY = 9;
 
 const BUTTON_TYPE = 'button';
 
-const numberButtons = [];
-const symbolButtons = [];
-const specialButtons = [];
+const numberKeys = [];
+const symbolKeys = [];
+const specialKeys = [];
 const activeButtons = new Set();
 
 let keyLabels = null;
@@ -85,60 +92,137 @@ class Keyboard {
 
     keyLabels = outerKeyLabels;
 
-    numberButtons.forEach((numberButton, index) => {
-      numberButton.textContent = keyLabels.numbers[index].base;
-      updateButton(numberButton, keyLabels.numbers[index].base, `Digit${keyLabels.numbers[index].base}`);
+    numberKeys.forEach((numberKey, index) => {
+      numberKey.dataset.code = `Digit${keyLabels.numbers[index].base}`;
+
+      const numberBaseButton = numberKey.firstElementChild;
+      numberBaseButton.textContent = keyLabels.numbers[index].base;
+
+      const numberKeyAlt = keyLabels.numbers[index].alt;
+
+      if (typeof numberKeyAlt === 'string') {
+        const numberAltButton = numberBaseButton.cloneNode();
+        numberAltButton.classList.add(ClassNames.ALT);
+        numberAltButton.textContent = numberKeyAlt;
+        numberKey.append(numberAltButton);
+      } else if (typeof numberKeyAlt === 'object') {
+        const numberAltEnButton = numberBaseButton.cloneNode();
+        numberAltEnButton.classList.add(ClassNames.ALT);
+        numberAltEnButton.classList.add(ClassNames.EN);
+        numberAltEnButton.textContent = numberKeyAlt.en;
+        numberKey.append(numberAltEnButton);
+
+        const numberAltRuButton = numberBaseButton.cloneNode();
+        numberAltRuButton.classList.add(ClassNames.ALT);
+        numberAltRuButton.classList.add(ClassNames.RU);
+        numberAltRuButton.textContent = numberKeyAlt.ru;
+        numberKey.append(numberAltRuButton);
+      }
+
+      numberBaseButton.classList.add(ClassNames.BASE);
+      numberBaseButton.classList.add(ClassNames.BUTTON_VISIBLE);
     });
 
-    symbolButtons.forEach((symbolButton, index) => {
+    symbolKeys.forEach((symbolKey, index) => {
+      const symbolBaseButton = symbolKey.firstElementChild;
       const labelContainer = keyLabels.symbols[index];
-
-      if (typeof labelContainer.base === 'string') {
-        symbolButton.textContent = labelContainer.base;
-      } else {
-        symbolButton.textContent = labelContainer.base[lang];
-      }
+      const altLang = lang === 'en' ? 'ru' : 'en';
 
       if (labelContainer.code) {
-        symbolButton.dataset.type = labelContainer.code;
+        symbolKey.dataset.code = labelContainer.code;
       } else {
-        symbolButton.dataset.type = `Key${labelContainer.alt.en}`;
+        symbolKey.dataset.code = `Key${labelContainer.alt.en}`;
       }
+
+      if (typeof labelContainer.base === 'string') {
+        symbolBaseButton.textContent = labelContainer.base;
+      } else {
+        symbolBaseButton.textContent = labelContainer.base[lang];
+
+        const symbolAltBaseButton = symbolBaseButton.cloneNode();
+        symbolAltBaseButton.textContent = labelContainer.base[altLang];
+        symbolAltBaseButton.classList.add(ClassNames.BASE);
+        symbolAltBaseButton.classList.add(ClassNames[altLang.toUpperCase()]);
+        symbolKey.append(symbolAltBaseButton);
+      }
+
+      if (typeof labelContainer.alt === 'object') {
+        const symbolAltEnButton = symbolBaseButton.cloneNode();
+        symbolAltEnButton.textContent = labelContainer.alt.en;
+        symbolAltEnButton.classList.add(ClassNames.ALT);
+        symbolAltEnButton.classList.add(ClassNames.EN);
+        symbolKey.append(symbolAltEnButton);
+
+        const symbolAltRuButton = symbolBaseButton.cloneNode();
+        symbolAltRuButton.textContent = labelContainer.alt.ru;
+        symbolAltRuButton.classList.add(ClassNames.ALT);
+        symbolAltRuButton.classList.add(ClassNames.RU);
+        symbolKey.append(symbolAltRuButton);
+
+        symbolBaseButton.classList.add(ClassNames[lang.toUpperCase()]);
+      } else if (typeof labelContainer.alt === 'string') {
+        const symbolAltButton = symbolBaseButton.cloneNode();
+        symbolAltButton.textContent = labelContainer.alt;
+        symbolAltButton.classList.add(ClassNames.ALT);
+        symbolKey.append(symbolAltButton);
+      }
+
+      symbolBaseButton.classList.add(ClassNames.BASE);
+      symbolBaseButton.classList.add(ClassNames.BUTTON_VISIBLE);
     });
 
-    specialButtons.forEach((specialButton, index) => {
+    specialKeys.forEach((specialKey, index) => {
+      const specialButton = specialKey.firstElementChild;
+      specialButton.classList.add(ClassNames.BUTTON_VISIBLE);
+
       if (index === 0) {
-        updateButton(specialButton, keyLabels.special.backspace, SpecialButtonCodes.BACKSPACE);
+        specialKey.dataset.code = SpecialButtonCodes.BACKSPACE;
+        specialButton.textContent = keyLabels.special.backspace;
       } else if (index === 1) {
-        updateButton(specialButton, keyLabels.special.tab, SpecialButtonCodes.TAB);
+        specialKey.dataset.code = SpecialButtonCodes.TAB;
+        specialButton.textContent = keyLabels.special.tab;
       } else if (index === 2) {
-        updateButton(specialButton, keyLabels.special.del, SpecialButtonCodes.DEL);
+        specialKey.dataset.code = SpecialButtonCodes.DEL;
+        specialButton.textContent = keyLabels.special.del;
       } else if (index === 3) {
-        updateButton(specialButton, keyLabels.special['caps-lock'], SpecialButtonCodes.CAPS_LOCK);
+        specialKey.dataset.code = SpecialButtonCodes.CAPS_LOCK;
+        specialButton.textContent = keyLabels.special['caps-lock'];
       } else if (index === 4) {
-        updateButton(specialButton, keyLabels.special.enter, SpecialButtonCodes.ENTER);
+        specialKey.dataset.code = SpecialButtonCodes.ENTER;
+        specialButton.textContent = keyLabels.special.enter;
       } else if (index === 5) {
-        updateButton(specialButton, keyLabels.special.shift, SpecialButtonCodes.LEFT_SHIFT);
+        specialKey.dataset.code = SpecialButtonCodes.LEFT_SHIFT;
+        specialButton.textContent = keyLabels.special.shift;
       } else if (index === 6) {
-        updateButton(specialButton, keyLabels.special['arrow-up'], SpecialButtonCodes.ARROW_UP);
+        specialKey.dataset.code = SpecialButtonCodes.ARROW_UP;
+        specialButton.textContent = keyLabels.special['arrow-up'];
       } else if (index === 7) {
-        updateButton(specialButton, keyLabels.special.shift, SpecialButtonCodes.RIGHT_SHIFT);
+        specialKey.dataset.code = SpecialButtonCodes.RIGHT_SHIFT;
+        specialButton.textContent = keyLabels.special.shift;
       } else if (index === 8) {
-        updateButton(specialButton, keyLabels.special.ctrl, SpecialButtonCodes.LEFT_CTRL);
+        specialKey.dataset.code = SpecialButtonCodes.LEFT_CTRL;
+        specialButton.textContent = keyLabels.special.ctrl;
       } else if (index === 9) {
-        updateButton(specialButton, keyLabels.special.win, SpecialButtonCodes.WIN);
+        specialKey.dataset.code = SpecialButtonCodes.WIN;
+        specialButton.textContent = keyLabels.special.win;
       } else if (index === 10) {
-        updateButton(specialButton, keyLabels.special.alt, SpecialButtonCodes.LEFT_ALT);
+        specialKey.dataset.code = SpecialButtonCodes.LEFT_ALT;
+        specialButton.textContent = keyLabels.special.alt;
       } else if (index === 11) {
-        updateButton(specialButton, keyLabels.special.alt, SpecialButtonCodes.RIGHT_ALT);
+        specialKey.dataset.code = SpecialButtonCodes.RIGHT_ALT;
+        specialButton.textContent = keyLabels.special.alt;
       } else if (index === 12) {
-        updateButton(specialButton, keyLabels.special['arrow-left'], SpecialButtonCodes.ARROW_LEFT);
+        specialKey.dataset.code = SpecialButtonCodes.ARROW_LEFT;
+        specialButton.textContent = keyLabels.special['arrow-left'];
       } else if (index === 13) {
-        updateButton(specialButton, keyLabels.special['arrow-down'], SpecialButtonCodes.ARROW_DOWN);
+        specialKey.dataset.code = SpecialButtonCodes.ARROW_DOWN;
+        specialButton.textContent = keyLabels.special['arrow-down'];
       } else if (index === 14) {
-        updateButton(specialButton, keyLabels.special['arrow-right'], SpecialButtonCodes.ARROW_RIGHT);
+        specialKey.dataset.code = SpecialButtonCodes.ARROW_RIGHT;
+        specialButton.textContent = keyLabels.special['arrow-right'];
       } else if (index === 15) {
-        updateButton(specialButton, keyLabels.special.ctrl, SpecialButtonCodes.RIGHT_CTRL);
+        specialKey.dataset.code = SpecialButtonCodes.RIGHT_CTRL;
+        specialButton.textContent = keyLabels.special.ctrl;
       }
     });
   }
@@ -146,14 +230,15 @@ class Keyboard {
   static keyDown(e) {
     e.preventDefault();
 
-    const button = keyboard.querySelector(`[data-type="${e.code}"]`);
+    const key = keyboard.querySelector(`[data-code="${e.code}"]`);
+    const button = key.querySelector(`.${ClassNames.BUTTON_VISIBLE}`);
     button.classList.add(ClassNames.BUTTON_ACTIVE);
     activeButtons.add(button);
 
     const textareaValue = keyboardTextarea.value;
     const cursorPosition = keyboardTextarea.selectionStart;
 
-    if (!specialButtons.includes(button) || button.dataset.type.includes('Arrow')) {
+    if (!specialKeys.includes(key) || key.dataset.code.includes('Arrow')) {
       updateTextareaValue(button.textContent);
     } else if (e.code === SpecialButtonCodes.ENTER) {
       updateTextareaValue('\n');
@@ -174,7 +259,9 @@ class Keyboard {
     let currentButton = null;
 
     activeButtons.forEach((activeButton) => {
-      if (activeButton.dataset.type === e.code) {
+      const buttonParent = activeButton.parentElement;
+
+      if (buttonParent.dataset.code === e.code) {
         currentButton = activeButton;
       }
     });
@@ -215,7 +302,7 @@ function fillKeyboardRows(keyboardRows) {
 
       modifyKey(keyboardKey, index, i, keysInRowQuantity);
       modifyButton(keyboardButton, index, i, keysInRowQuantity);
-      registerButton(keyboardButton, index, i);
+      registerKey(keyboardKey, index, i);
     }
   });
 }
@@ -241,20 +328,13 @@ function modifyButton(button, rowIndex, keyIndex, keysInRowQuantity) {
     button.classList.add(ClassNames.BUTTON_DARK);
   }
 }
-function registerButton(button, rowIndex, keyIndex) {
+function registerKey(key, rowIndex, keyIndex) {
   if (rowIndex === 0 && keyIndex > 0 && keyIndex < 11) {
-    numberButtons.push(button);
-  } else if (button.classList.contains(ClassNames.BUTTON_DARK)) {
-    specialButtons.push(button);
+    numberKeys.push(key);
+  } else if (key.firstElementChild.classList.contains(ClassNames.BUTTON_DARK)) {
+    specialKeys.push(key);
   } else {
-    symbolButtons.push(button);
-  }
-}
-function updateButton(button, content, type) {
-  button.textContent = content;
-
-  if (type) {
-    button.dataset.type = type;
+    symbolKeys.push(key);
   }
 }
 function updateTextareaValue(value) {
