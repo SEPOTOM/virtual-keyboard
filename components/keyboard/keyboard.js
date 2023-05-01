@@ -1,4 +1,4 @@
-import Language from "../../js/language/language.js";
+import Language from '../../js/language/language.js';
 
 const ClassNames = {
   KEYBOARD: 'keyboard',
@@ -17,7 +17,7 @@ const ClassNames = {
   RU: 'ru',
   EN: 'en',
   SHIFT: 'shift',
-  CAPS_LOCK: 'caps-lock'
+  CAPS_LOCK: 'caps-lock',
 };
 const SpecialButtonCodes = {
   BACKSPACE: 'Backspace',
@@ -56,14 +56,184 @@ const activeButtons = new Set();
 let keyLabels = null;
 let keyboardTextarea = null;
 let keyboard = null;
-let lang = Language.get();
+const lang = Language.get();
 
 let rightShiftButton = null;
 let leftShiftButton = null;
-let capsLockButton = null;
 
 let isShiftPressed = false;
 let isCapsLockPressed = false;
+
+function createElement(tagName, className) {
+  const element = document.createElement(tagName);
+  element.className = className;
+  return element;
+}
+function modifyKey(key, rowIndex, keyIndex, keysInRowQuantity) {
+  if (keyIndex === 0 && rowIndex !== 0 && rowIndex !== 4) {
+    key.classList.add(ClassNames.KEY_WIDE);
+  } else if (keyIndex === keysInRowQuantity - 1 && (rowIndex === 0 || rowIndex === 1)) {
+    key.classList.add(ClassNames.KEY_WIDE);
+  } else if (keyIndex === keysInRowQuantity - 1 && (rowIndex === 2 || rowIndex === 3)) {
+    key.classList.add(ClassNames.KEY_DOUBLE);
+  } else if (rowIndex === 4 && keyIndex === 3) {
+    key.classList.add(ClassNames.KEY_WIDE);
+  }
+}
+function modifyButton(button, rowIndex, keyIndex, keysInRowQuantity) {
+  if (keyIndex === 0 && rowIndex !== 0) {
+    button.classList.add(ClassNames.BUTTON_DARK);
+  } else if (keyIndex === keysInRowQuantity - 1) {
+    button.classList.add(ClassNames.BUTTON_DARK);
+  } else if (keyIndex === keysInRowQuantity - 2 && rowIndex === 3) {
+    button.classList.add(ClassNames.BUTTON_DARK);
+  } else if (rowIndex === 4 && keyIndex !== 3) {
+    button.classList.add(ClassNames.BUTTON_DARK);
+  }
+}
+function registerKey(key, rowIndex, keyIndex) {
+  if (rowIndex === 0 && keyIndex > 0 && keyIndex < 11) {
+    numberKeys.push(key);
+  } else if (key.firstElementChild.classList.contains(ClassNames.BUTTON_DARK)) {
+    specialKeys.push(key);
+  } else {
+    symbolKeys.push(key);
+  }
+}
+function fillKeyboardRows(keyboardRows) {
+  keyboardRows.forEach((keyboardRow, index) => {
+    let keysInRowQuantity = null;
+
+    if (index === 0) {
+      keysInRowQuantity = KEYS_IN_FIRST_ROW_QUANTITY;
+    } else if (index === 1) {
+      keysInRowQuantity = KEYS_IN_SECOND_ROW_QUANTITY;
+    } else if (index === 2) {
+      keysInRowQuantity = KEYS_IN_THIRD_ROW_QUANTITY;
+    } else if (index === 3) {
+      keysInRowQuantity = KEYS_IN_FOURTH_ROW_QUANTITY;
+    } else if (index === 4) {
+      keysInRowQuantity = KEYS_IN_FIFTH_ROW_QUANTITY;
+    }
+
+    for (let i = 0; i < keysInRowQuantity; i += 1) {
+      const keyboardKey = createElement('li', ClassNames.KEY);
+      keyboardRow.append(keyboardKey);
+
+      const keyboardButton = createElement('button', ClassNames.BUTTON);
+      keyboardButton.type = BUTTON_TYPE;
+      keyboardKey.append(keyboardButton);
+
+      modifyKey(keyboardKey, index, i, keysInRowQuantity);
+      modifyButton(keyboardButton, index, i, keysInRowQuantity);
+      registerKey(keyboardKey, index, i);
+    }
+  });
+}
+function symbolLabelsToLowerCase() {
+  symbolKeys.forEach((symbolKey) => {
+    if (symbolKey.dataset.code.includes('Key')) {
+      const visibleButton = symbolKey.querySelector(`.${ClassNames.BUTTON_VISIBLE}`);
+      visibleButton.classList.remove(ClassNames.BUTTON_VISIBLE);
+
+      const symbolButton = symbolKey.querySelector(`.${ClassNames.BASE}.${ClassNames[lang.toUpperCase()]}`);
+      symbolButton.classList.add(ClassNames.BUTTON_VISIBLE);
+    }
+  });
+}
+function symbolLabelsToUpperCase() {
+  symbolKeys.forEach((symbolKey) => {
+    if (symbolKey.dataset.code.includes('Key')) {
+      const visibleButton = symbolKey.querySelector(`.${ClassNames.BUTTON_VISIBLE}`);
+      visibleButton.classList.remove(ClassNames.BUTTON_VISIBLE);
+
+      const symbolButton = symbolKey.querySelector(`.${ClassNames.ALT}.${ClassNames[lang.toUpperCase()]}`);
+      symbolButton.classList.add(ClassNames.BUTTON_VISIBLE);
+    }
+  });
+}
+function showAltNumberButtons() {
+  numberKeys.forEach((numberKey) => {
+    const visibleButton = numberKey.querySelector(`.${ClassNames.BUTTON_VISIBLE}`);
+    visibleButton.classList.remove(ClassNames.BUTTON_VISIBLE);
+
+    const altButton = numberKey.querySelector(`.${ClassNames.ALT}.${ClassNames[lang.toUpperCase()]}`) || numberKey.querySelector(`.${ClassNames.ALT}`);
+    altButton.classList.add(ClassNames.BUTTON_VISIBLE);
+  });
+}
+function showAltSymbolButtons() {
+  symbolKeys.forEach((symbolKey) => {
+    const altButton = symbolKey.querySelector(`.${ClassNames.ALT}.${ClassNames[lang.toUpperCase()]}`) || symbolKey.querySelector(`.${ClassNames.ALT}`);
+
+    if (!altButton || altButton.classList.contains(ClassNames.BUTTON_VISIBLE)) {
+      return;
+    }
+
+    altButton.classList.add(ClassNames.BUTTON_VISIBLE);
+
+    const visibleButton = symbolKey.querySelector(`.${ClassNames.BUTTON_VISIBLE}`);
+    visibleButton.classList.remove(ClassNames.BUTTON_VISIBLE);
+  });
+}
+function showBaseSymbolButtons() {
+  symbolKeys.forEach((symbolKey) => {
+    const visibleButton = symbolKey.querySelector(`.${ClassNames.BUTTON_VISIBLE}`);
+    visibleButton.classList.remove(ClassNames.BUTTON_VISIBLE);
+
+    const baseButton = symbolKey.querySelector(`.${ClassNames.BASE}.${ClassNames[lang.toUpperCase()]}`) || symbolKey.querySelector(`.${ClassNames.BASE}`);
+    baseButton.classList.add(ClassNames.BUTTON_VISIBLE);
+  });
+}
+function showAltNotLetterButtons() {
+  symbolKeys.forEach((symbolKey) => {
+    if (symbolKey.dataset.code.includes('Key')) {
+      return;
+    }
+
+    const altButton = symbolKey.querySelector(`.${ClassNames.ALT}.${ClassNames[lang.toUpperCase()]}`) || symbolKey.querySelector(`.${ClassNames.ALT}`);
+
+    if (!altButton || altButton.classList.contains(ClassNames.BUTTON_VISIBLE)) {
+      return;
+    }
+
+    altButton.classList.add(ClassNames.BUTTON_VISIBLE);
+
+    const visibleButton = symbolKey.querySelector(`.${ClassNames.BUTTON_VISIBLE}`);
+    visibleButton.classList.remove(ClassNames.BUTTON_VISIBLE);
+  });
+}
+function updateTextareaValue(value) {
+  const textareaValue = keyboardTextarea.value;
+  const cursorPosition = keyboardTextarea.selectionStart;
+
+  keyboardTextarea.value = textareaValue.slice(0, cursorPosition)
+                            + value + textareaValue.slice(cursorPosition);
+
+  keyboardTextarea.selectionStart = cursorPosition + value.length;
+  keyboardTextarea.selectionEnd = cursorPosition + value.length;
+}
+function showBaseNumberButtons() {
+  numberKeys.forEach((numberKey) => {
+    const visibleButton = numberKey.querySelector(`.${ClassNames.BUTTON_VISIBLE}`);
+    visibleButton.classList.remove(ClassNames.BUTTON_VISIBLE);
+
+    const baseButton = numberKey.querySelector(`.${ClassNames.BASE}.${ClassNames[lang.toUpperCase()]}`) || numberKey.querySelector(`.${ClassNames.BASE}`);
+    baseButton.classList.add(ClassNames.BUTTON_VISIBLE);
+  });
+}
+function showBaseNotLetterButtons() {
+  symbolKeys.forEach((symbolKey) => {
+    if (symbolKey.dataset.code.includes('Key')) {
+      return;
+    }
+
+    const visibleButton = symbolKey.querySelector(`.${ClassNames.BUTTON_VISIBLE}`);
+    visibleButton.classList.remove(ClassNames.BUTTON_VISIBLE);
+
+    const baseButton = symbolKey.querySelector(`.${ClassNames.BASE}.${ClassNames[lang.toUpperCase()]}`) || symbolKey.querySelector(`.${ClassNames.BASE}`);
+    baseButton.classList.add(ClassNames.BUTTON_VISIBLE);
+  });
+}
 
 class Keyboard {
   static createComponent(tagName) {
@@ -81,7 +251,7 @@ class Keyboard {
     keyboard.append(keyboardPanel);
 
     const keyboardRows = [];
-    for ( let i = 0; i < ROWS_QUANTITY; i++ ) {
+    for (let i = 0; i < ROWS_QUANTITY; i += 1) {
       const keyboardRow = createElement('ul', ClassNames.ROW);
       keyboardPanel.append(keyboardRow);
       keyboardRows.push(keyboardRow);
@@ -93,16 +263,18 @@ class Keyboard {
   }
 
   static setContent(outerKeyLabels) {
-    if (!outerKeyLabels && !outerKeyLabels.numbers && !outerKeyLabels.symbols && !outerKeyLabels.special) {
+    if (!outerKeyLabels && !outerKeyLabels.numbers
+        && !outerKeyLabels.symbols && !outerKeyLabels.special) {
       throw new TypeError('keyLabels is not valid');
     }
 
     keyLabels = outerKeyLabels;
 
     numberKeys.forEach((numberKey, index) => {
-      numberKey.dataset.code = `Digit${keyLabels.numbers[index].base}`;
+      const localNumberKey = numberKey;
+      localNumberKey.dataset.code = `Digit${keyLabels.numbers[index].base}`;
 
-      const numberBaseButton = numberKey.firstElementChild;
+      const numberBaseButton = localNumberKey.firstElementChild;
       numberBaseButton.textContent = keyLabels.numbers[index].base;
 
       const numberKeyAlt = keyLabels.numbers[index].alt;
@@ -111,19 +283,19 @@ class Keyboard {
         const numberAltButton = numberBaseButton.cloneNode();
         numberAltButton.classList.add(ClassNames.ALT);
         numberAltButton.textContent = numberKeyAlt;
-        numberKey.append(numberAltButton);
+        localNumberKey.append(numberAltButton);
       } else if (typeof numberKeyAlt === 'object') {
         const numberAltEnButton = numberBaseButton.cloneNode();
         numberAltEnButton.classList.add(ClassNames.ALT);
         numberAltEnButton.classList.add(ClassNames.EN);
         numberAltEnButton.textContent = numberKeyAlt.en;
-        numberKey.append(numberAltEnButton);
+        localNumberKey.append(numberAltEnButton);
 
         const numberAltRuButton = numberBaseButton.cloneNode();
         numberAltRuButton.classList.add(ClassNames.ALT);
         numberAltRuButton.classList.add(ClassNames.RU);
         numberAltRuButton.textContent = numberKeyAlt.ru;
-        numberKey.append(numberAltRuButton);
+        localNumberKey.append(numberAltRuButton);
       }
 
       numberBaseButton.classList.add(ClassNames.BASE);
@@ -131,14 +303,15 @@ class Keyboard {
     });
 
     symbolKeys.forEach((symbolKey, index) => {
-      const symbolBaseButton = symbolKey.firstElementChild;
+      const localSymbolKey = symbolKey;
+      const symbolBaseButton = localSymbolKey.firstElementChild;
       const labelContainer = keyLabels.symbols[index];
       const altLang = lang === 'en' ? 'ru' : 'en';
 
       if (labelContainer.code) {
-        symbolKey.dataset.code = labelContainer.code;
+        localSymbolKey.dataset.code = labelContainer.code;
       } else {
-        symbolKey.dataset.code = `Key${labelContainer.alt.en}`;
+        localSymbolKey.dataset.code = `Key${labelContainer.alt.en}`;
       }
 
       if (typeof labelContainer.base === 'string') {
@@ -179,59 +352,59 @@ class Keyboard {
     });
 
     specialKeys.forEach((specialKey, index) => {
+      const localSpecialKey = specialKey;
       const specialButton = specialKey.firstElementChild;
       specialButton.classList.add(ClassNames.BUTTON_VISIBLE);
 
       if (index === 0) {
-        specialKey.dataset.code = SpecialButtonCodes.BACKSPACE;
+        localSpecialKey.dataset.code = SpecialButtonCodes.BACKSPACE;
         specialButton.textContent = keyLabels.special.backspace;
       } else if (index === 1) {
-        specialKey.dataset.code = SpecialButtonCodes.TAB;
+        localSpecialKey.dataset.code = SpecialButtonCodes.TAB;
         specialButton.textContent = keyLabels.special.tab;
       } else if (index === 2) {
-        specialKey.dataset.code = SpecialButtonCodes.DEL;
+        localSpecialKey.dataset.code = SpecialButtonCodes.DEL;
         specialButton.textContent = keyLabels.special.del;
       } else if (index === 3) {
-        specialKey.dataset.code = SpecialButtonCodes.CAPS_LOCK;
+        localSpecialKey.dataset.code = SpecialButtonCodes.CAPS_LOCK;
         specialButton.textContent = keyLabels.special['caps-lock'];
-        capsLockButton = specialButton;
       } else if (index === 4) {
-        specialKey.dataset.code = SpecialButtonCodes.ENTER;
+        localSpecialKey.dataset.code = SpecialButtonCodes.ENTER;
         specialButton.textContent = keyLabels.special.enter;
       } else if (index === 5) {
-        specialKey.dataset.code = SpecialButtonCodes.LEFT_SHIFT;
+        localSpecialKey.dataset.code = SpecialButtonCodes.LEFT_SHIFT;
         specialButton.textContent = keyLabels.special.shift;
         leftShiftButton = specialButton;
       } else if (index === 6) {
-        specialKey.dataset.code = SpecialButtonCodes.ARROW_UP;
+        localSpecialKey.dataset.code = SpecialButtonCodes.ARROW_UP;
         specialButton.textContent = keyLabels.special['arrow-up'];
       } else if (index === 7) {
-        specialKey.dataset.code = SpecialButtonCodes.RIGHT_SHIFT;
+        localSpecialKey.dataset.code = SpecialButtonCodes.RIGHT_SHIFT;
         specialButton.textContent = keyLabels.special.shift;
         rightShiftButton = specialButton;
       } else if (index === 8) {
-        specialKey.dataset.code = SpecialButtonCodes.LEFT_CTRL;
+        localSpecialKey.dataset.code = SpecialButtonCodes.LEFT_CTRL;
         specialButton.textContent = keyLabels.special.ctrl;
       } else if (index === 9) {
-        specialKey.dataset.code = SpecialButtonCodes.WIN;
+        localSpecialKey.dataset.code = SpecialButtonCodes.WIN;
         specialButton.textContent = keyLabels.special.win;
       } else if (index === 10) {
-        specialKey.dataset.code = SpecialButtonCodes.LEFT_ALT;
+        localSpecialKey.dataset.code = SpecialButtonCodes.LEFT_ALT;
         specialButton.textContent = keyLabels.special.alt;
       } else if (index === 11) {
-        specialKey.dataset.code = SpecialButtonCodes.RIGHT_ALT;
+        localSpecialKey.dataset.code = SpecialButtonCodes.RIGHT_ALT;
         specialButton.textContent = keyLabels.special.alt;
       } else if (index === 12) {
-        specialKey.dataset.code = SpecialButtonCodes.ARROW_LEFT;
+        localSpecialKey.dataset.code = SpecialButtonCodes.ARROW_LEFT;
         specialButton.textContent = keyLabels.special['arrow-left'];
       } else if (index === 13) {
-        specialKey.dataset.code = SpecialButtonCodes.ARROW_DOWN;
+        localSpecialKey.dataset.code = SpecialButtonCodes.ARROW_DOWN;
         specialButton.textContent = keyLabels.special['arrow-down'];
       } else if (index === 14) {
-        specialKey.dataset.code = SpecialButtonCodes.ARROW_RIGHT;
+        localSpecialKey.dataset.code = SpecialButtonCodes.ARROW_RIGHT;
         specialButton.textContent = keyLabels.special['arrow-right'];
       } else if (index === 15) {
-        specialKey.dataset.code = SpecialButtonCodes.RIGHT_CTRL;
+        localSpecialKey.dataset.code = SpecialButtonCodes.RIGHT_CTRL;
         specialButton.textContent = keyLabels.special.ctrl;
       }
     });
@@ -248,7 +421,8 @@ class Keyboard {
     const textareaValue = keyboardTextarea.value;
     const cursorPosition = keyboardTextarea.selectionStart;
 
-    const shiftKeyPressed = e.code === SpecialButtonCodes.RIGHT_SHIFT || e.code === SpecialButtonCodes.LEFT_SHIFT;
+    const shiftKeyPressed = e.code === SpecialButtonCodes.RIGHT_SHIFT
+                            || e.code === SpecialButtonCodes.LEFT_SHIFT;
     const capsLockKeyPressed = e.code === SpecialButtonCodes.CAPS_LOCK;
 
     if (capsLockKeyPressed && isShiftPressed && !isCapsLockPressed) {
@@ -286,11 +460,13 @@ class Keyboard {
     } else if (e.code === SpecialButtonCodes.TAB) {
       updateTextareaValue('    ');
     } else if (e.code === SpecialButtonCodes.BACKSPACE && cursorPosition > 0) {
-      keyboardTextarea.value = textareaValue.slice(0, cursorPosition - 1) + textareaValue.slice(cursorPosition);
+      keyboardTextarea.value = textareaValue.slice(0, cursorPosition - 1)
+                                + textareaValue.slice(cursorPosition);
       keyboardTextarea.selectionStart = cursorPosition - 1;
       keyboardTextarea.selectionEnd = cursorPosition - 1;
     } else if (e.code === SpecialButtonCodes.DEL) {
-      keyboardTextarea.value = textareaValue.slice(0, cursorPosition) + textareaValue.slice(cursorPosition + 1);
+      keyboardTextarea.value = textareaValue.slice(0, cursorPosition)
+                                + textareaValue.slice(cursorPosition + 1);
       keyboardTextarea.selectionStart = cursorPosition;
       keyboardTextarea.selectionEnd = cursorPosition;
     }
@@ -314,7 +490,8 @@ class Keyboard {
     currentButton.classList.remove(ClassNames.BUTTON_ACTIVE);
     activeButtons.delete(currentButton);
 
-    const shiftKeyUnpressed = !activeButtons.has(rightShiftButton) && !activeButtons.has(leftShiftButton);
+    const shiftKeyUnpressed = !activeButtons.has(rightShiftButton)
+                              && !activeButtons.has(leftShiftButton);
 
     if (shiftKeyUnpressed && !isCapsLockPressed) {
       showBaseNumberButtons();
@@ -327,176 +504,6 @@ class Keyboard {
       isShiftPressed = false;
     }
   }
-}
-
-function createElement(tagName, className) {
-  const element = document.createElement(tagName);
-  element.className = className;
-  return element;
-}
-function fillKeyboardRows(keyboardRows) {
-  keyboardRows.forEach((keyboardRow, index) => {
-    let keysInRowQuantity = null;
-
-    if (index === 0) {
-      keysInRowQuantity = KEYS_IN_FIRST_ROW_QUANTITY;
-    } else if (index === 1) {
-      keysInRowQuantity = KEYS_IN_SECOND_ROW_QUANTITY;
-    } else if (index === 2) {
-      keysInRowQuantity = KEYS_IN_THIRD_ROW_QUANTITY;
-    } else if (index === 3) {
-      keysInRowQuantity = KEYS_IN_FOURTH_ROW_QUANTITY;
-    } else if (index === 4) {
-      keysInRowQuantity = KEYS_IN_FIFTH_ROW_QUANTITY;
-    }
-
-    for (let i = 0; i < keysInRowQuantity; i++ ) {
-      const keyboardKey = createElement('li', ClassNames.KEY);
-      keyboardRow.append(keyboardKey);
-
-      const keyboardButton = createElement('button', ClassNames.BUTTON);
-      keyboardButton.type = BUTTON_TYPE;
-      keyboardKey.append(keyboardButton);
-
-      modifyKey(keyboardKey, index, i, keysInRowQuantity);
-      modifyButton(keyboardButton, index, i, keysInRowQuantity);
-      registerKey(keyboardKey, index, i);
-    }
-  });
-}
-function modifyKey(key, rowIndex, keyIndex, keysInRowQuantity) {
-  if (keyIndex === 0 && rowIndex !== 0 && rowIndex !== 4) {
-    key.classList.add(ClassNames.KEY_WIDE);
-  } else if (keyIndex === keysInRowQuantity - 1 && (rowIndex === 0 || rowIndex === 1)) {
-    key.classList.add(ClassNames.KEY_WIDE);
-  } else if (keyIndex === keysInRowQuantity - 1 && (rowIndex === 2 || rowIndex === 3)) {
-    key.classList.add(ClassNames.KEY_DOUBLE);
-  } else if (rowIndex === 4 && keyIndex === 3) {
-    key.classList.add(ClassNames.KEY_WIDE);
-  }
-}
-function modifyButton(button, rowIndex, keyIndex, keysInRowQuantity) {
-  if (keyIndex === 0 && rowIndex !== 0) {
-    button.classList.add(ClassNames.BUTTON_DARK);
-  } else if (keyIndex === keysInRowQuantity - 1) {
-    button.classList.add(ClassNames.BUTTON_DARK);
-  } else if (keyIndex === keysInRowQuantity - 2 && rowIndex === 3) {
-    button.classList.add(ClassNames.BUTTON_DARK);
-  } else if (rowIndex === 4 && keyIndex !== 3) {
-    button.classList.add(ClassNames.BUTTON_DARK);
-  }
-}
-function registerKey(key, rowIndex, keyIndex) {
-  if (rowIndex === 0 && keyIndex > 0 && keyIndex < 11) {
-    numberKeys.push(key);
-  } else if (key.firstElementChild.classList.contains(ClassNames.BUTTON_DARK)) {
-    specialKeys.push(key);
-  } else {
-    symbolKeys.push(key);
-  }
-}
-function updateTextareaValue(value) {
-  const textareaValue = keyboardTextarea.value;
-  const cursorPosition = keyboardTextarea.selectionStart;
-
-  keyboardTextarea.value = textareaValue.slice(0, cursorPosition) + value + textareaValue.slice(cursorPosition);
-
-  keyboardTextarea.selectionStart = cursorPosition + value.length;
-  keyboardTextarea.selectionEnd = cursorPosition + value.length;
-}
-function symbolLabelsToUpperCase() {
-  symbolKeys.forEach((symbolKey) => {
-    if (symbolKey.dataset.code.includes('Key')) {
-      const visibleButton = symbolKey.querySelector(`.${ClassNames.BUTTON_VISIBLE}`);
-      visibleButton.classList.remove(ClassNames.BUTTON_VISIBLE);
-
-      const symbolButton = symbolKey.querySelector(`.${ClassNames.ALT}.${ClassNames[lang.toUpperCase()]}`);
-      symbolButton.classList.add(ClassNames.BUTTON_VISIBLE);
-    }
-  });
-}
-function symbolLabelsToLowerCase() {
-  symbolKeys.forEach((symbolKey) => {
-    if (symbolKey.dataset.code.includes('Key')) {
-      const visibleButton = symbolKey.querySelector(`.${ClassNames.BUTTON_VISIBLE}`);
-      visibleButton.classList.remove(ClassNames.BUTTON_VISIBLE);
-
-      const symbolButton = symbolKey.querySelector(`.${ClassNames.BASE}.${ClassNames[lang.toUpperCase()]}`);
-      symbolButton.classList.add(ClassNames.BUTTON_VISIBLE);
-    }
-  });
-}
-function showBaseNumberButtons() {
-  numberKeys.forEach((numberKey) => {
-    const visibleButton = numberKey.querySelector(`.${ClassNames.BUTTON_VISIBLE}`);
-    visibleButton.classList.remove(ClassNames.BUTTON_VISIBLE);
-
-    const baseButton = numberKey.querySelector(`.${ClassNames.BASE}.${ClassNames[lang.toUpperCase()]}`) || numberKey.querySelector(`.${ClassNames.BASE}`);
-    baseButton.classList.add(ClassNames.BUTTON_VISIBLE);
-  });
-}
-function showBaseSymbolButtons() {
-  symbolKeys.forEach((symbolKey) => {
-    const visibleButton = symbolKey.querySelector(`.${ClassNames.BUTTON_VISIBLE}`);
-    visibleButton.classList.remove(ClassNames.BUTTON_VISIBLE);
-
-    const baseButton = symbolKey.querySelector(`.${ClassNames.BASE}.${ClassNames[lang.toUpperCase()]}`) || symbolKey.querySelector(`.${ClassNames.BASE}`);
-    baseButton.classList.add(ClassNames.BUTTON_VISIBLE);
-  });
-}
-function showAltNumberButtons() {
-  numberKeys.forEach((numberKey) => {
-    const visibleButton = numberKey.querySelector(`.${ClassNames.BUTTON_VISIBLE}`);
-    visibleButton.classList.remove(ClassNames.BUTTON_VISIBLE);
-
-    const altButton = numberKey.querySelector(`.${ClassNames.ALT}.${ClassNames[lang.toUpperCase()]}`) || numberKey.querySelector(`.${ClassNames.ALT}`);
-    altButton.classList.add(ClassNames.BUTTON_VISIBLE);
-  });
-}
-function showAltSymbolButtons() {
-  symbolKeys.forEach((symbolKey) => {
-    const altButton = symbolKey.querySelector(`.${ClassNames.ALT}.${ClassNames[lang.toUpperCase()]}`) || symbolKey.querySelector(`.${ClassNames.ALT}`);
-
-    if (!altButton || altButton.classList.contains(ClassNames.BUTTON_VISIBLE)) {
-      return;
-    }
-
-    altButton.classList.add(ClassNames.BUTTON_VISIBLE);
-
-    const visibleButton = symbolKey.querySelector(`.${ClassNames.BUTTON_VISIBLE}`);
-    visibleButton.classList.remove(ClassNames.BUTTON_VISIBLE);
-  });
-}
-function showAltNotLetterButtons() {
-  symbolKeys.forEach((symbolKey) => {
-    if (symbolKey.dataset.code.includes('Key')) {
-      return;
-    }
-
-    const altButton = symbolKey.querySelector(`.${ClassNames.ALT}.${ClassNames[lang.toUpperCase()]}`) || symbolKey.querySelector(`.${ClassNames.ALT}`);
-
-    if (!altButton || altButton.classList.contains(ClassNames.BUTTON_VISIBLE)) {
-      return;
-    }
-
-    altButton.classList.add(ClassNames.BUTTON_VISIBLE);
-
-    const visibleButton = symbolKey.querySelector(`.${ClassNames.BUTTON_VISIBLE}`);
-    visibleButton.classList.remove(ClassNames.BUTTON_VISIBLE);
-  });
-}
-function showBaseNotLetterButtons() {
-  symbolKeys.forEach((symbolKey) => {
-    if (symbolKey.dataset.code.includes('Key')) {
-      return;
-    }
-
-    const visibleButton = symbolKey.querySelector(`.${ClassNames.BUTTON_VISIBLE}`);
-    visibleButton.classList.remove(ClassNames.BUTTON_VISIBLE);
-
-    const baseButton = symbolKey.querySelector(`.${ClassNames.BASE}.${ClassNames[lang.toUpperCase()]}`) || symbolKey.querySelector(`.${ClassNames.BASE}`);
-    baseButton.classList.add(ClassNames.BUTTON_VISIBLE);
-  });
 }
 
 export default Keyboard;
