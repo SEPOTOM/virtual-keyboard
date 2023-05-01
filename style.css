@@ -69,9 +69,9 @@ html {
 .keyboard__button_dark {
   background-color: #303030;
 }
-.keyboard__button_active {
+.active .keyboard__button {
   background-color: #ce0707;
-  border-radius: 50%;
+  border-radius: 30px;
 }
 .keyboard__button_visible {
   display: flex;

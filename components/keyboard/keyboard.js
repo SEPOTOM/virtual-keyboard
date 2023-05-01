@@ -9,7 +9,6 @@ const ClassNames = {
   KEY_WIDE: 'keyboard__key_wide',
   KEY_DOUBLE: 'keyboard__key_double',
   BUTTON: 'keyboard__button',
-  BUTTON_ACTIVE: 'keyboard__button_active',
   BUTTON_DARK: 'keyboard__button_dark',
   BUTTON_VISIBLE: 'keyboard__button_visible',
   BASE: 'base',
@@ -18,6 +17,7 @@ const ClassNames = {
   EN: 'en',
   SHIFT: 'shift',
   CAPS_LOCK: 'caps-lock',
+  ACTIVE: 'active',
 };
 const SpecialButtonCodes = {
   BACKSPACE: 'Backspace',
@@ -415,7 +415,7 @@ class Keyboard {
 
     const key = keyboard.querySelector(`[data-code="${e.code}"]`);
     const button = key.querySelector(`.${ClassNames.BUTTON_VISIBLE}`);
-    button.classList.add(ClassNames.BUTTON_ACTIVE);
+    key.classList.add(ClassNames.ACTIVE);
     activeButtons.add(button);
 
     const textareaValue = keyboardTextarea.value;
@@ -429,11 +429,11 @@ class Keyboard {
       isCapsLockPressed = true;
       symbolLabelsToLowerCase();
     } else if (capsLockKeyPressed && isShiftPressed && isCapsLockPressed) {
-      button.classList.remove(ClassNames.BUTTON_ACTIVE);
+      key.classList.remove(ClassNames.ACTIVE);
       isCapsLockPressed = false;
       symbolLabelsToUpperCase();
     } else if (capsLockKeyPressed && isCapsLockPressed) {
-      button.classList.remove(ClassNames.BUTTON_ACTIVE);
+      key.classList.remove(ClassNames.ACTIVE);
       isCapsLockPressed = false;
       symbolLabelsToLowerCase();
       return;
@@ -488,7 +488,7 @@ class Keyboard {
       return;
     }
 
-    currentButton.classList.remove(ClassNames.BUTTON_ACTIVE);
+    currentButton.parentElement.classList.remove(ClassNames.ACTIVE);
     activeButtons.delete(currentButton);
 
     const shiftKeyUnpressed = !activeButtons.has(rightShiftButton)

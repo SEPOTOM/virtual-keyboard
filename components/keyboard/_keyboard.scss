@@ -69,9 +69,9 @@
       background-color: $main-dark-color;
     }
 
-    &_active {
+    .active & {
       background-color: $key-active-color;
-      border-radius: 50%;
+      border-radius: 30px;
     }
 
     &_visible {
