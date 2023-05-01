@@ -60,6 +60,7 @@ html {
   background-color: #474747;
   border-radius: 10px;
   border: none;
+  outline: none;
   cursor: pointer;
   transition: all 0.3s ease 0s;
 }
