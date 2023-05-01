@@ -1,0 +1,88 @@
+html {
+  height: 100%;
+}
+
+.page {
+  height: 100%;
+  margin: 0;
+}
+
+.wrapper {
+  margin: 0 auto;
+  max-width: 800px;
+}
+
+.keyboard {
+  width: 100%;
+  padding: 20px 0;
+}
+.keyboard__textarea {
+  box-sizing: border-box;
+  display: block;
+  width: 100%;
+  margin-bottom: 10px;
+  padding: 5px;
+  font-size: 20px;
+}
+.keyboard__panel {
+  display: flex;
+  flex-direction: column;
+  row-gap: 10px;
+  padding: 15px;
+  background-color: #646464;
+  border-radius: 10px;
+}
+.keyboard__row {
+  display: flex;
+  column-gap: 10px;
+  margin: 0;
+  padding: 0;
+}
+.keyboard__key {
+  min-width: 40px;
+  min-height: 40px;
+  list-style: none;
+}
+.keyboard__key_wide {
+  flex: 1 1 auto;
+}
+.keyboard__key_double {
+  min-width: 90px;
+}
+.keyboard__button {
+  display: none;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  font-size: 18px;
+  color: #f0f0f0;
+  background-color: #474747;
+  border-radius: 10px;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  transition: all 0.3s ease 0s;
+}
+.keyboard__button:hover {
+  background-color: #be3030;
+}
+.keyboard__button_dark {
+  background-color: #303030;
+}
+.active .keyboard__button {
+  background-color: #ce0707;
+  border-radius: 30px;
+}
+.keyboard__button_visible {
+  display: flex;
+}
+
+.text {
+  padding: 5px;
+  font-size: 20px;
+  line-height: 130%;
+  text-align: center;
+}
+
+/*# sourceMappingURL=style.css.map */
