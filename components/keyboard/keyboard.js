@@ -471,23 +471,6 @@ class Keyboard {
     const leftCtrlKeyPressed = e.code === SpecialButtonCodes.LEFT_CTRL;
     const leftAltKeyPressed = e.code === SpecialButtonCodes.LEFT_ALT;
 
-    if (capsLockKeyPressed && isShiftPressed && !isCapsLockPressed) {
-      isCapsLockPressed = true;
-      symbolLabelsToLowerCase();
-    } else if (capsLockKeyPressed && isShiftPressed && isCapsLockPressed) {
-      key.classList.remove(ClassNames.ACTIVE);
-      isCapsLockPressed = false;
-      symbolLabelsToUpperCase();
-    } else if (capsLockKeyPressed && isCapsLockPressed) {
-      key.classList.remove(ClassNames.ACTIVE);
-      isCapsLockPressed = false;
-      symbolLabelsToLowerCase();
-      return;
-    } else if (capsLockKeyPressed) {
-      symbolLabelsToUpperCase();
-      isCapsLockPressed = true;
-    }
-
     if (shiftKeyPressed && !isCapsLockPressed) {
       showAltNumberButtons();
       showAltSymbolButtons();
@@ -497,6 +480,12 @@ class Keyboard {
       showAltNumberButtons();
       showAltNotLetterButtons();
       isShiftPressed = true;
+    } else if (capsLockKeyPressed) {
+      symbolLabelsToUpperCase();
+    }
+
+    if (capsLockKeyPressed && isShiftPressed && !isCapsLockPressed) {
+      symbolLabelsToLowerCase();
     }
 
     if (leftCtrlKeyPressed) {
@@ -542,8 +531,34 @@ class Keyboard {
       }
     });
 
-    if (!currentButton
-        || currentButton.parentElement.dataset.code === SpecialButtonCodes.CAPS_LOCK) {
+    if (!currentButton) {
+      return;
+    }
+
+    const capsLockKeyUnpressed = currentButton.parentElement.dataset.code
+                                    === SpecialButtonCodes.CAPS_LOCK;
+
+    if (capsLockKeyUnpressed && isShiftPressed && !isCapsLockPressed) {
+      isCapsLockPressed = true;
+      return;
+    }
+
+    if (capsLockKeyUnpressed && isShiftPressed && isCapsLockPressed) {
+      currentButton.parentElement.classList.remove(ClassNames.ACTIVE);
+      isCapsLockPressed = false;
+      symbolLabelsToUpperCase();
+      return;
+    }
+
+    if (capsLockKeyUnpressed && isCapsLockPressed) {
+      currentButton.parentElement.classList.remove(ClassNames.ACTIVE);
+      isCapsLockPressed = false;
+      symbolLabelsToLowerCase();
+      return;
+    }
+
+    if (capsLockKeyUnpressed && !isCapsLockPressed) {
+      isCapsLockPressed = true;
       return;
     }
 
