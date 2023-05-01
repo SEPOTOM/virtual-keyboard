@@ -9,6 +9,7 @@ const ClassNames = {
 
 const TextContent = {
   SYSTEM_INFO: 'Клавиатура создана в операционной системе Windows',
+  LANG_INFO: 'Для смены языка нажмите левый Ctrl + левый Alt',
 };
 
 async function initApp() {
@@ -22,8 +23,10 @@ async function initApp() {
   const keyboard = Keyboard.createComponent('div');
   wrapper.append(keyboard);
 
-  const textBlock = Text.createComponent(TextContent.SYSTEM_INFO);
-  wrapper.append(textBlock);
+  for (let key in TextContent) {
+    const textBlock = Text.createComponent(TextContent[key]);
+    wrapper.append(textBlock);
+  }
 
   Keyboard.setContent(keyLabels);
 }
