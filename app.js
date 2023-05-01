@@ -23,10 +23,10 @@ async function initApp() {
   const keyboard = Keyboard.createComponent('div');
   wrapper.append(keyboard);
 
-  for (let key in TextContent) {
-    const textBlock = Text.createComponent(TextContent[key]);
+  Object.values(TextContent).forEach((text) => {
+    const textBlock = Text.createComponent(text);
     wrapper.append(textBlock);
-  }
+  });
 
   Keyboard.setContent(keyLabels);
 }
