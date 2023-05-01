@@ -37,6 +37,15 @@ const SpecialButtonCodes = {
   ARROW_RIGHT: 'ArrowRight',
   WIN: 'MetaLeft',
 };
+const RuLangSymbolCodes = [
+  'Backquote',
+  'BracketLeft',
+  'BracketRight',
+  'Semicolon',
+  'Quote',
+  'Comma',
+  'Period',
+];
 
 const TEXTAREA_ROWS = 5;
 const ROWS_QUANTITY = 5;
@@ -56,13 +65,17 @@ const activeButtons = new Set();
 let keyLabels = null;
 let keyboardTextarea = null;
 let keyboard = null;
-const lang = Language.get();
+let lang = Language.get();
 
 let rightShiftButton = null;
 let leftShiftButton = null;
+let leftCtrlButton = null;
+let leftAltButton = null;
 
 let isShiftPressed = false;
 let isCapsLockPressed = false;
+let isLeftCtrlPressed = false;
+let isLeftAltPressed = false;
 
 function createElement(tagName, className) {
   const element = document.createElement(tagName);
@@ -132,7 +145,8 @@ function fillKeyboardRows(keyboardRows) {
 }
 function symbolLabelsToLowerCase() {
   symbolKeys.forEach((symbolKey) => {
-    if (symbolKey.dataset.code.includes('Key')) {
+    if (symbolKey.dataset.code.includes('Key')
+        || (RuLangSymbolCodes.includes(symbolKey.dataset.code) && lang === 'ru')) {
       const visibleButton = symbolKey.querySelector(`.${ClassNames.BUTTON_VISIBLE}`);
       visibleButton.classList.remove(ClassNames.BUTTON_VISIBLE);
 
@@ -143,7 +157,8 @@ function symbolLabelsToLowerCase() {
 }
 function symbolLabelsToUpperCase() {
   symbolKeys.forEach((symbolKey) => {
-    if (symbolKey.dataset.code.includes('Key')) {
+    if (symbolKey.dataset.code.includes('Key')
+        || (RuLangSymbolCodes.includes(symbolKey.dataset.code) && lang === 'ru')) {
       const visibleButton = symbolKey.querySelector(`.${ClassNames.BUTTON_VISIBLE}`);
       visibleButton.classList.remove(ClassNames.BUTTON_VISIBLE);
 
@@ -164,15 +179,22 @@ function showAltNumberButtons() {
 function showAltSymbolButtons() {
   symbolKeys.forEach((symbolKey) => {
     const altButton = symbolKey.querySelector(`.${ClassNames.ALT}.${ClassNames[lang.toUpperCase()]}`) || symbolKey.querySelector(`.${ClassNames.ALT}`);
+    const needSwitchLang = isLeftAltPressed && isLeftCtrlPressed;
 
-    if (!altButton || altButton.classList.contains(ClassNames.BUTTON_VISIBLE)) {
-      return;
+    if (altButton && needSwitchLang
+        && altButton.classList.contains(ClassNames[lang.toUpperCase()])) {
+      const visibleButton = symbolKey.querySelector(`.${ClassNames.BUTTON_VISIBLE}`);
+      visibleButton.classList.remove(ClassNames.BUTTON_VISIBLE);
+
+      altButton.classList.add(ClassNames.BUTTON_VISIBLE);
     }
 
-    altButton.classList.add(ClassNames.BUTTON_VISIBLE);
+    if (altButton && !altButton.classList.contains(ClassNames.BUTTON_VISIBLE) && !needSwitchLang) {
+      altButton.classList.add(ClassNames.BUTTON_VISIBLE);
 
-    const visibleButton = symbolKey.querySelector(`.${ClassNames.BUTTON_VISIBLE}`);
-    visibleButton.classList.remove(ClassNames.BUTTON_VISIBLE);
+      const visibleButton = symbolKey.querySelector(`.${ClassNames.BUTTON_VISIBLE}`);
+      visibleButton.classList.remove(ClassNames.BUTTON_VISIBLE);
+    }
   });
 }
 function showBaseSymbolButtons() {
@@ -186,7 +208,8 @@ function showBaseSymbolButtons() {
 }
 function showAltNotLetterButtons() {
   symbolKeys.forEach((symbolKey) => {
-    if (symbolKey.dataset.code.includes('Key')) {
+    if (symbolKey.dataset.code.includes('Key')
+        || (RuLangSymbolCodes.includes(symbolKey.dataset.code) && lang === 'ru')) {
       return;
     }
 
@@ -223,7 +246,8 @@ function showBaseNumberButtons() {
 }
 function showBaseNotLetterButtons() {
   symbolKeys.forEach((symbolKey) => {
-    if (symbolKey.dataset.code.includes('Key')) {
+    if (symbolKey.dataset.code.includes('Key')
+        || (RuLangSymbolCodes.includes(symbolKey.dataset.code) && lang === 'ru')) {
       return;
     }
 
@@ -233,6 +257,24 @@ function showBaseNotLetterButtons() {
     const baseButton = symbolKey.querySelector(`.${ClassNames.BASE}.${ClassNames[lang.toUpperCase()]}`) || symbolKey.querySelector(`.${ClassNames.BASE}`);
     baseButton.classList.add(ClassNames.BUTTON_VISIBLE);
   });
+}
+function switchLang() {
+  lang = lang === 'en' ? 'ru' : 'en';
+  Language.set(lang);
+
+  if (isCapsLockPressed && isShiftPressed) {
+    showAltNumberButtons();
+    showBaseSymbolButtons();
+    showAltNotLetterButtons();
+  } else if (isCapsLockPressed) {
+    showAltSymbolButtons();
+    showBaseNotLetterButtons();
+  } else if (isShiftPressed) {
+    showAltNumberButtons();
+    showAltSymbolButtons();
+  } else {
+    showBaseSymbolButtons();
+  }
 }
 
 class Keyboard {
@@ -385,12 +427,14 @@ class Keyboard {
       } else if (index === 8) {
         localSpecialKey.dataset.code = SpecialButtonCodes.LEFT_CTRL;
         specialButton.textContent = keyLabels.special.ctrl;
+        leftCtrlButton = specialButton;
       } else if (index === 9) {
         localSpecialKey.dataset.code = SpecialButtonCodes.WIN;
         specialButton.textContent = keyLabels.special.win;
       } else if (index === 10) {
         localSpecialKey.dataset.code = SpecialButtonCodes.LEFT_ALT;
         specialButton.textContent = keyLabels.special.alt;
+        leftAltButton = specialButton;
       } else if (index === 11) {
         localSpecialKey.dataset.code = SpecialButtonCodes.RIGHT_ALT;
         specialButton.textContent = keyLabels.special.alt;
@@ -424,6 +468,8 @@ class Keyboard {
     const shiftKeyPressed = e.code === SpecialButtonCodes.RIGHT_SHIFT
                             || e.code === SpecialButtonCodes.LEFT_SHIFT;
     const capsLockKeyPressed = e.code === SpecialButtonCodes.CAPS_LOCK;
+    const leftCtrlKeyPressed = e.code === SpecialButtonCodes.LEFT_CTRL;
+    const leftAltKeyPressed = e.code === SpecialButtonCodes.LEFT_ALT;
 
     if (capsLockKeyPressed && isShiftPressed && !isCapsLockPressed) {
       isCapsLockPressed = true;
@@ -451,6 +497,19 @@ class Keyboard {
       showAltNumberButtons();
       showAltNotLetterButtons();
       isShiftPressed = true;
+    }
+
+    if (leftCtrlKeyPressed) {
+      isLeftCtrlPressed = true;
+    }
+
+    if (leftAltKeyPressed) {
+      isLeftAltPressed = true;
+    }
+
+    if ((isLeftAltPressed && leftCtrlKeyPressed)
+        || (isLeftCtrlPressed && leftAltKeyPressed)) {
+      switchLang();
     }
 
     if (!specialKeys.includes(key) || key.dataset.code.includes('Arrow')) {
@@ -493,6 +552,8 @@ class Keyboard {
 
     const shiftKeyUnpressed = !activeButtons.has(rightShiftButton)
                               && !activeButtons.has(leftShiftButton);
+    const leftCtrlKeyUnpressed = !activeButtons.has(leftCtrlButton);
+    const leftAltKeyUnpressed = !activeButtons.has(leftAltButton);
 
     if (shiftKeyUnpressed && !isCapsLockPressed) {
       showBaseNumberButtons();
@@ -503,6 +564,14 @@ class Keyboard {
       showBaseNumberButtons();
       showBaseNotLetterButtons();
       isShiftPressed = false;
+    }
+
+    if (leftCtrlKeyUnpressed) {
+      isLeftCtrlPressed = false;
+    }
+
+    if (leftAltKeyUnpressed) {
+      isLeftAltPressed = false;
     }
   }
 }
