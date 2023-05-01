@@ -1,9 +1,14 @@
 import KeyLabels from './js/key-labels/key-labels.js';
 import Wrapper from './components/wrapper/wrapper.js';
 import Keyboard from './components/keyboard/keyboard.js';
+import Text from './components/text/text.js';
 
 const ClassNames = {
   PAGE: 'page',
+};
+
+const TextContent = {
+  SYSTEM_INFO: 'Клавиатура создана в операционной системе Windows',
 };
 
 async function initApp() {
@@ -16,6 +21,9 @@ async function initApp() {
 
   const keyboard = Keyboard.createComponent('div');
   wrapper.append(keyboard);
+
+  const textBlock = Text.createComponent(TextContent.SYSTEM_INFO);
+  wrapper.append(textBlock);
 
   Keyboard.setContent(keyLabels);
 }
