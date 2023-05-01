@@ -483,7 +483,8 @@ class Keyboard {
       }
     });
 
-    if (currentButton.parentElement.dataset.code === SpecialButtonCodes.CAPS_LOCK) {
+    if (!currentButton
+        || currentButton.parentElement.dataset.code === SpecialButtonCodes.CAPS_LOCK) {
       return;
     }
 
